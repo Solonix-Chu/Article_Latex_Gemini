@@ -1,10 +1,11 @@
 # Fdb version 4
-["pdflatex"] 1747370182.03397 "d:/Desktop/latex/IEEE-Transactions-LaTeX2e-templates-and-instructions/Gemini.tex" "Gemini.pdf" "Gemini" 1747370182.86345 0
-  "Gemini.aux" 1747370182 1508 6ef121b3efce05b1e0b5244712b3bfe9 "pdflatex"
-  "Gemini.out" 1747370182 1674 ed67b142bac9e882570e6f6bc48e69d6 "pdflatex"
-  "Gemini.tex" 1747370181 44068 6b4eb46b8f085cfb61585a57795f0f91 ""
+["pdflatex"] 1747373486.86343 "d:/Desktop/latex/IEEE-Transactions-LaTeX2e-templates-and-instructions/Gemini.tex" "Gemini.pdf" "Gemini" 1747373487.86927 0
+  "Gemini.aux" 1747373487 2714 192e93e4b8c6d9f1b93323b425da2408 "pdflatex"
+  "Gemini.out" 1747373487 1674 ed67b142bac9e882570e6f6bc48e69d6 "pdflatex"
+  "Gemini.tex" 1747373487 44365 130aa8dfaf54e17e3240ad2ce0f72c4b ""
   "IEEEtran.cls" 1732506494 288451 7379a03af5f3d0dad26db23a43c3a726 ""
-  "d:/Desktop/latex/IEEE-Transactions-LaTeX2e-templates-and-instructions/Gemini.tex" 1747370181 44068 6b4eb46b8f085cfb61585a57795f0f91 ""
+  "Reinforcement learning model.png" 1747372773 204391 edd5effd91919d3090c481b2101723ac ""
+  "d:/Desktop/latex/IEEE-Transactions-LaTeX2e-templates-and-instructions/Gemini.tex" 1747373487 44365 130aa8dfaf54e17e3240ad2ce0f72c4b ""
   "d:/texlive/2025/texmf-dist/fonts/enc/dvips/base/8r.enc" 1747212416 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "d:/texlive/2025/texmf-dist/fonts/map/fontname/texfonts.map" 1747212622 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "d:/texlive/2025/texmf-dist/fonts/tfm/adobe/times/ptmb7t.tfm" 1747214075 2172 fd0c924230362ff848a33632ed45dc23 ""
@@ -99,6 +100,9 @@
   "d:/texlive/2025/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1747214455 5512713 e2e6a6c037ab0e435732e63fdc2d5cc7 ""
   "d:/texlive/2025/texmf-var/web2c/pdftex/pdflatex.fmt" 1747214744 3346143 ad8c816cbf860d39214cf8355aec9fc0 ""
   "d:/texlive/2025/texmf.cnf" 1747214390 713 e69b156964470283e0530f5060668171 ""
+  "fig_ddpg_e2e.png" 1747370480 123719 6e535fd8446c08576080ddb21e944a4c ""
+  "fig_marl_v2x_spectrum_sharing.png" 1747371893 35122 081653966839574db0c32a4668a0a477 ""
+  "fig_symbol_selection_mdp.png" 1747370481 86824 60a01814d2a811000f009359455c0e68 ""
   (generated)
   "Gemini.aux"
   "Gemini.log"

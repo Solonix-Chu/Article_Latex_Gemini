@@ -168,6 +168,8 @@ INPUT ./Gemini.out
 INPUT ./Gemini.out
 OUTPUT Gemini.out
 INPUT d:/texlive/2025/texmf-dist/fonts/tfm/adobe/times/ptmrc7t.tfm
+INPUT d:/texlive/2025/texmf-dist/fonts/tfm/adobe/times/ptmb7t.tfm
+INPUT d:/texlive/2025/texmf-dist/fonts/tfm/adobe/times/ptmb7t.tfm
 INPUT d:/texlive/2025/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm
 INPUT d:/texlive/2025/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm
 INPUT d:/texlive/2025/texmf-dist/tex/latex/amsfonts/umsa.fd
@@ -197,8 +199,30 @@ INPUT d:/texlive/2025/texmf-dist/fonts/tfm/adobe/times/ptmb8r.tfm
 INPUT d:/texlive/2025/texmf-dist/fonts/vf/adobe/times/ptmrc7t.vf
 INPUT d:/texlive/2025/texmf-dist/fonts/tfm/adobe/times/ptmr8r.tfm
 INPUT d:/texlive/2025/texmf-dist/fonts/tfm/adobe/times/ptmr8r.tfm
+INPUT d:/texlive/2025/texmf-dist/fonts/vf/adobe/times/ptmb7t.vf
+INPUT d:/texlive/2025/texmf-dist/fonts/tfm/adobe/times/ptmb8r.tfm
 INPUT d:/texlive/2025/texmf-dist/fonts/vf/adobe/times/ptmr7t.vf
+INPUT ./fig_symbol_selection_mdp.png
+INPUT ./fig_symbol_selection_mdp.png
+INPUT ./fig_symbol_selection_mdp.png
+INPUT ./fig_symbol_selection_mdp.png
+INPUT ./fig_symbol_selection_mdp.png
+INPUT ./Reinforcement learning model.png
+INPUT ./Reinforcement learning model.png
+INPUT ./Reinforcement learning model.png
+INPUT ./Reinforcement learning model.png
+INPUT ./Reinforcement learning model.png
 INPUT d:/texlive/2025/texmf-dist/fonts/vf/adobe/times/ptmr7t.vf
+INPUT ./fig_ddpg_e2e.png
+INPUT ./fig_ddpg_e2e.png
+INPUT ./fig_ddpg_e2e.png
+INPUT ./fig_ddpg_e2e.png
+INPUT ./fig_ddpg_e2e.png
+INPUT ./fig_marl_v2x_spectrum_sharing.png
+INPUT ./fig_marl_v2x_spectrum_sharing.png
+INPUT ./fig_marl_v2x_spectrum_sharing.png
+INPUT ./fig_marl_v2x_spectrum_sharing.png
+INPUT ./fig_marl_v2x_spectrum_sharing.png
 INPUT d:/texlive/2025/texmf-dist/fonts/vf/adobe/times/ptmri7t.vf
 INPUT d:/texlive/2025/texmf-dist/fonts/tfm/adobe/times/ptmri8r.tfm
 INPUT Gemini.aux
