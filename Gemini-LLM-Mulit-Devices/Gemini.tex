@@ -1,0 +1,387 @@
+\documentclass[11pt, a4paper]{article}
+
+% --- 包导入 ---
+\usepackage{ctex} % 中文支持
+\usepackage[T1]{fontenc}
+\usepackage{amsmath, amssymb} % 数学公式
+\usepackage{geometry} % 页面布局
+\usepackage{booktabs} % 高质量表格
+\usepackage{graphicx} % 图像
+\usepackage{hyperref} % 超链接
+\usepackage{longtable} % 长表格
+
+% --- 页面边距设置 ---
+\geometry{
+    a4paper,
+    left=2.5cm,
+    right=2.5cm,
+    top=2.5cm,
+    bottom=2.5cm
+}
+
+% --- 超链接设置 ---
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+    pdftitle={高效多设备协同推理的大型AI模型},
+    pdfpagemode=FullScreen,
+}
+
+% --- 文档标题信息 ---
+\title{\bfseries 高效多设备协同推理的大型AI模型：\\一个联合调度、通信和计算资源分配的框架}
+\author{拓展研究报告}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+\newpage
+
+\tableofcontents
+\thispagestyle{empty}
+\newpage
+
+\setcounter{page}{1}
+
+% --- 第一部分：引言与基础概念 ---
+\part{引言与基础概念}
+
+\section{从单设备到多设备边缘协同推理的演进}
+
+\subsection{单设备协同推理的基础}
+
+近年来，大型人工智能模型（LAIM）的推理服务需求激增，推动了从传统云端推理向边缘推理的范式转变，以满足低延迟和隐私保护的应用需求 [1]。在此背景下，一项奠基性的研究工作，"The Larger the Merrier? Efficient Large AI Model Inference in Wireless Edge Networks"，为单设备单服务器场景下的LAIM协同推理（co-inference）提供了坚实的理论与设计基础 [1]。
+
+该研究的核心思想是，一个预训练的LAIM可以被分割成两部分：一个部署在边缘设备上的子模型和一个部署在边缘服务器上的子模型。设备执行部分推理任务，提取中间特征，然后将其上传至服务器完成剩余的计算。为了提高效率，该框架引入了模型剪枝技术，以降低设备端和服务器端模型的计算和存储开销 [1]。其系统模型包含一个边缘设备和一个边缘服务器，详细分析了端到端的延迟和能耗，包括设备端推理、中间特征上传和服务器端推理三个阶段 [1]。
+
+该研究最重要的理论贡献之一是证明了LAIM的输出失真（output distortion）可以被其参数失真（parameter distortion）所上界。这一结论首先在全连接深度神经网络（FC DNN）上得到严格证明，随后通过一阶泰勒展开推广到包括Transformer在内的通用AI模型 [1]。这个发现极具价值，因为它将难以直接分析的任务级性能（输出失真）与可量化的模型级属性（参数失真）联系起来。基于此，研究利用率失真理论，推导出了模型参数失真的下界，从而建立了剪枝率、模型熵等系统参数与推理性能之间的解析关系。
+
+在此理论基础上，该研究构建了一个以最小化推理失真界为目标的优化问题（P1）。该问题联合优化了设备端的剪枝率 $\rho$、服务器端的剪枝率 $\tilde{\rho}$、设备发射功率 $p$ 以及两端的计算频率 $f$ 和 $\tilde{f}$，同时满足系统总延迟、总能耗以及资源（如最大功率、最大频率）的约束 [1]。由于问题的非凸性，研究提出了一种基于逐次凸近似（Successive Convex Approximation, SCA）的高效算法来求解，实验证明了该联合设计在平衡推理性能、延迟和能耗方面的优越性 [1]。
+
+\subsection{多设备场景的必要性与新兴复杂性}
+
+尽管单设备模型为LAIM边缘推理提供了宝贵的见解，但现实世界的应用场景，如智能交通、工业物联网和增强现实，通常涉及大量用户设备同时请求服务。因此，将研究框架从单设备扩展到"单服务器、多设备"的场景不仅是自然的演进，更是一次根本性的范式转变。这种转变引入了单设备模型中不存在的全新挑战，使得问题的性质和复杂度发生了质的变化。
+
+首先，系统从一个确定性的资源分配问题转变为一个随机和竞争性的动态控制问题。在单设备模型中，信道条件和任务请求是给定的，优化问题可以看作是在一个静态环境中寻找最优配置 [1]。然而，在多设备场景中，多个用户的信道条件是随时间变化的随机变量，任务的到达也构成了一个随机过程。这意味着一次性的静态优化将是次优的，系统必须能够实时适应动态变化的环境，这要求采用如深度强化学习等动态控制方法 [2, 3]。
+
+其次，多设备场景引入了四个核心的复杂性维度：
+
+\begin{itemize}
+\item \textbf{资源竞争 (Resource Contention)}：多个设备现在需要竞争有限的共享资源。在通信层面，它们共同竞争上行链路的无线频谱资源；在计算层面，它们竞争边缘服务器上有限的并行处理核心和计算周期 [4, 5]。如何公平且高效地在用户间分配这些资源，成为一个核心的调度难题。
+
+\item \textbf{用户间干扰 (Inter-User Interference)}：在无线通信中，当多个设备同时通过上行链路传输数据时，它们的信号会相互干扰，这被称为同信道干扰（co-channel interference）。这是限制多用户无线网络性能的主要瓶颈，在单用户模型中则完全不存在 [6, 7]。一个用户的发射功率选择会直接影响其他所有用户的通信质量，这种紧密的耦合关系使得资源分配变得异常复杂 [8, 9]。
+
+\item \textbf{调度复杂性 (Scheduling Complexity)}：服务器不再是专用于单个任务，而是必须管理一个由来自不同用户的任务组成的队列。服务器需要决定处理这些到达任务的顺序，这引入了排队延迟（queuing delay）[10, 11]。一个智能的调度策略不仅要考虑任务的优先级、大小，还要与通信侧的状态相协调，以最小化用户的平均等待时间 [12, 13, 14]。
+
+\item \textbf{公平性 (Fairness)}：在异构用户群体中（例如，不同设备能力、不同服务质量要求），确保性能（如延迟、推理精度）的公平分配成为一个至关重要且常常与系统总效率相冲突的目标 [15]。简单地最大化系统总吞吐量可能会导致"赢者通吃"的现象，即拥有更好信道或设备的用户占据所有资源，而其他用户则被"饿死"。因此，必须在优化目标中明确引入公平性考量。
+\end{itemize}
+
+\subsection{报告目标与结构}
+
+本报告旨在对基于 [1] 的研究进行全面和深入的拓展，为"单服务器、多设备"架构下的LAIM协同推理提供一个完整的理论和算法框架。本报告的目标是成为该领域研究人员和工程师的一份权威性技术参考。
+
+报告的结构安排如下：
+
+\begin{itemize}
+\item \textbf{第二部分} 将建立新的多设备协同推理系统模型，详细阐述多用户通信、服务器排队以及端到端的性能指标。
+
+\item \textbf{第三部分} 将构建一个复杂的多目标联合优化问题，并探讨解决该问题的分层优化框架以及两种先进的算法范式：博弈论和深度强化学习。
+
+\item \textbf{第四部分} 将对所提出框架的性能进行深入分析，讨论关键的性能权衡，并为实际部署提供战略性建议，最后展望未来的研究方向。
+\end{itemize}
+
+% --- 第二部分：系统模型 ---
+\part{多设备协同推理的系统模型}
+
+为了对多设备协同推理系统进行严谨的分析和优化，首先需要建立一个全面的数学模型。本部分将详细定义系统架构、多用户通信模型、服务器计算与排队模型，以及整体性能衡量指标。
+
+% 表1：符号表
+\begin{table}[h!]
+\centering
+\caption{符号表}
+\label{tab:symbols}
+\begin{tabular}{lll}
+\toprule
+\textbf{符号类别} & \textbf{符号} & \textbf{定义} \\
+\midrule
+\textbf{系统索引} & $\mathcal{N}$ & 用户设备集合, $\mathcal{N} = \{1, 2, \dots, N\}$ \\
+& $i$ & 用户索引, $i \in \mathcal{N}$ \\
+& $\mathcal{K}$ & 正交子载波集合, $\mathcal{K} = \{1, 2, \dots, K\}$ \\
+& $k$ & 子载波索引, $k \in \mathcal{K}$ \\
+& $c$ & 服务器处理核心数量 \\
+\midrule
+\textbf{信道参数} & $g_{i,k}$ & 用户 $i$ 在子载波 $k$ 上的信道功率增益 \\
+& $B$ & 系统总带宽 \\
+& $B_k$ & 单个子载波的带宽, $B_k = B/K$ \\
+& $N_0$ & 噪声功率谱密度 \\
+& $I_{\text{inter},k}$ & 子载波 $k$ 上的小区间干扰功率 \\
+\midrule
+\textbf{模型与任务参数} & $\rho_i, \tilde{\rho}_i$ & 用户 $i$ 的设备端和服务器端模型剪枝率 \\
+& $q_i, s_i$ & 用户 $i$ 原始设备端和服务器端模型的参数量 \\
+& $N_{\text{FLOP},i}, \tilde{N}_{\text{FLOP},i}$ & 用户 $i$ 原始设备端和服务器端模型的计算量 (FLOPs) \\
+& $\theta_i$ & 用户 $i$ 的中间特征数据大小 (bits) \\
+& $b$ & 模型参数的量化比特数 \\
+\midrule
+\textbf{优化变量} & $p_{i,k}$ & 用户 $i$ 在子载波 $k$ 上的发射功率 \\
+& $\mathbf{p}_i$ & 用户 $i$ 的功率分配向量, $\{p_{i,k}\}_{k \in \mathcal{K}}$ \\
+& $x_{i,k}$ & 二元变量, 若子载波 $k$ 分配给用户 $i$ 则为1, 否则为0 \\
+& $\mathbf{x}_i$ & 用户 $i$ 的子载波分配向量, $\{x_{i,k}\}_{k \in \mathcal{K}}$ \\
+& $f_i, \tilde{f}_i$ & 分配给用户 $i$ 的设备端和服务器端CPU时钟频率 \\
+\midrule
+\textbf{性能指标} & $R_i$ & 用户 $i$ 的总上行通信速率 (bps) \\
+& $T_i^{\text{dev}}, T_i^{\text{comm}}, T_i^{\text{serv}}$ & 用户 $i$ 的设备计算、通信和服务器端延迟 \\
+& $T_i^{\text{wait}}, T_i^{\text{proc}}$ & 用户 $i$ 在服务器端的排队等待和处理延迟 \\
+& $T_i^{\text{total}}$ & 用户 $i$ 的端到端总延迟 \\
+& $E_i^{\text{dev}}, E_i^{\text{comm}}, E_i^{\text{serv}}$ & 用户 $i$ 的设备计算、通信和服务器端能耗 \\
+& $E^{\text{total}}$ & 系统总能耗 \\
+& $D_i(\rho_i, \tilde{\rho}_i)$ & 用户 $i$ 的推理失真 \\
+& $D_{\text{sys}}$ & 系统级推理失真函数 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{架构框架}
+
+系统架构由一个中心化的边缘服务器和一组异构的边缘设备构成。边缘服务器通过一个基站（Base Station, BS）与 $N$ 个用户设备（User Equipments, UEs）进行无线通信，其集合表示为 $\mathcal{N} = \{1, \dots, N\}$。服务器配备了 $c$ 个并行的处理核心和一个共享的任务队列。每个用户设备 $i \in \mathcal{N}$ 都是异构的，具有不同的计算能力、任务需求和信道条件 [5, 15]。
+
+多设备协同推理的工作流程是对 [1] 中单设备流程的并行化扩展：
+
+\begin{enumerate}
+\item \textbf{设备端处理}: 每个用户 $i$ 接收到一个推理任务。它首先根据自身的资源状况和网络状态，选择一个设备端剪枝率 $\rho_i$。然后，它使用剪枝后的模型在本地进行计算，生成大小为 $\theta_i$ 的中间特征。
+
+\item \textbf{上行传输}: 用户 $i$ 将其生成的中间特征通过无线信道上传到基站，并由基站转发至边缘服务器。
+
+\item \textbf{服务器端处理}: 服务器接收到来自不同用户的中间特征，并将它们放入一个任务队列中等待处理。当轮到用户 $i$ 的任务时，服务器为其分配计算资源，并使用对应的服务器端剪枝率 $\tilde{\rho}_i$ 对其子模型进行推理，最终生成结果。
+\end{enumerate}
+
+\subsection{多用户上行通信模型}
+
+\subsubsection{多址接入方案}
+
+为了有效管理多个用户对共享无线资源的访问，我们采用正交频分多址（Orthogonal Frequency Division Multiple Access, OFDMA）方案，这是现代无线通信系统（如4G LTE和5G）中广泛使用的技术 [9, 16]。在OFDMA中，总系统带宽 $B$ 被划分为 $K$ 个相互正交的子载波，集合为 $\mathcal{K}$。每个子载波在同一时间内只能分配给一个用户，从而避免了小区内的用户间干扰。我们引入一个二元变量 $x_{i,k} \in \{0, 1\}$ 来表示资源分配决策，其中 $x_{i,k}=1$ 表示子载波 $k$ 分配给了用户 $i$，否则为0。因此，必须满足约束 $\sum_{i=1}^N x_{i,k} \le 1, \forall k \in \mathcal{K}$。
+
+\subsubsection{考虑干扰的速率公式}
+
+尽管OFDMA消除了小区内干扰，但在密集的网络部署中，来自相邻小区的干扰（inter-cell interference）是不可忽视的性能限制因素 [6, 9]。因此，用户 $i$ 在子载波 $k$ 上可实现的通信速率不再由简单的香农公式决定，而是由信干噪比（Signal-to-Interference-plus-Noise Ratio, SINR）决定：
+
+\begin{equation}
+\text{SINR}_{i,k} = \frac{p_{i,k} g_{i,k}}{I_{\text{inter},k} + N_0 B_k}
+\end{equation}
+
+其中，$p_{i,k}$ 是用户 $i$ 在子载波 $k$ 上的发射功率，$g_{i,k}$ 是对应的信道功率增益，$B_k = B/K$ 是单个子载波的带宽，$N_0$ 是噪声功率谱密度，$I_{\text{inter},k}$ 是来自其他小区的干扰功率。
+
+用户 $i$ 的总上行通信速率 $R_i$ 是其所有被分配子载波的速率之和：
+
+\begin{equation}
+R_i(\mathbf{x}_i, \mathbf{p}_i) = \sum_{k=1}^K x_{i,k} B_k \log_2(1 + \text{SINR}_{i,k})
+\end{equation}
+
+\subsubsection{通信延迟}
+
+用户 $i$ 上传大小为 $\theta_i$ 的中间特征所需的通信延迟为：
+
+\begin{equation}
+T_i^{\text{comm}}(\mathbf{x}_i, \mathbf{p}_i) = \frac{\theta_i}{R_i(\mathbf{x}_i, \mathbf{p}_i)}
+\end{equation}
+
+\subsection{服务器端计算与排队模型}
+
+\subsubsection{服务器作为排队系统}
+
+我们将边缘服务器建模为一个拥有 $c$ 个并行处理核心的多服务器排队系统，例如一个M/G/c模型 [10, 17, 18]。来自用户 $i$ 的任务在完成上行传输后，以一个随机过程进入服务器的共享缓冲队列。任务的到达率和服务时间分布共同决定了队列的动态行为。
+
+\subsubsection{服务器延迟分析}
+
+用户 $i$ 的任务在服务器端的总延迟 $T_i^{\text{serv}}$ 由两部分构成：
+
+\begin{itemize}
+\item \textbf{排队等待延迟 ($T_i^{\text{wait}}$)}: 任务在队列中等待被处理核心拾取的时间。
+
+\item \textbf{处理延迟 ($T_i^{\text{proc}}$)}: 任务在处理核心上实际执行的时间。
+
+\begin{equation}
+T_i^{\text{proc}}(\tilde{\rho}_i, \tilde{f}_i) = \frac{\tilde{\rho}_i \tilde{N}_{\text{FLOP},i}}{\tilde{f}_i \tilde{c}}
+\end{equation}
+
+其中 $\tilde{f}_i$ 是服务器分配给处理任务 $i$ 的时钟频率。
+\end{itemize}
+
+\subsection{整体性能指标}
+
+\subsubsection{端到端延迟}
+
+用户 $i$ 经历的总端到端延迟是其在设备端计算、上行通信和服务器端（等待+处理）延迟的总和：
+
+\begin{equation}
+T_i^{\text{total}} = T_i^{\text{dev}}(\rho_i, f_i) + T_i^{\text{comm}}(\mathbf{x}_i, \mathbf{p}_i) + T_i^{\text{wait}} + T_i^{\text{proc}}(\tilde{\rho}_i, \tilde{f}_i)
+\end{equation}
+
+其中 $T_i^{\text{dev}}(\rho_i, f_i) = \rho_i N_{\text{FLOP},i} / (f_i c_i)$。
+
+\subsubsection{系统总能耗}
+
+\begin{equation}
+E^{\text{total}} = \sum_{i=1}^N \left( e_i^{\text{dev}}(\rho_i, f_i) + e_i^{\text{comm}}(\mathbf{p}_i) \right) + E^{\text{serv}}(\{\tilde{\rho}_i, \tilde{f}_i\}_{i \in \mathcal{N}})
+\end{equation}
+
+\subsubsection{多用户推理失真}
+
+\begin{equation}
+D_{\text{sys}} = \mathcal{F}(D_1(\rho_1, \tilde{\rho}_1), \dots, D_N(\rho_N, \tilde{\rho}_N))
+\end{equation}
+
+其中 $\mathcal{F}$ 是选择的聚合函数（如加权和、对数和等）。
+
+% --- 第三部分：问题建模与优化 ---
+\part{问题建模与优化}
+
+\section{联合优化问题建模 (P-Multi)}
+
+\subsection{多目标函数}
+
+我们将全局优化目标定义为一个加权和，旨在最小化系统总能耗、用户平均端到端延迟以及一个体现公平性的系统级推理失真函数。问题 (P-Multi) 可形式化如下：
+
+\begin{equation}
+\min_{\{\mathbf{\rho}, \tilde{\mathbf{\rho}}, \mathbf{f}, \tilde{\mathbf{f}}, \mathbf{p}, \mathbf{x}\}} w_E E^{\text{total}} + w_T \left(\frac{1}{N}\sum_{i=1}^N T_i^{\text{total}}\right) + w_D D_{\text{sys}}
+\end{equation}
+
+其中，$w_E, w_T, w_D$ 是非负权重，用于平衡能耗、延迟和失真这三个相互冲突的目标。
+
+\subsection{综合约束条件}
+
+\begin{align}
+\text{s.t.} \quad & T_i^{\text{total}} \le T_{\text{max}, i}, && \forall i \in \mathcal{N} \tag{C1: QoS约束} \\
+& E_i^{\text{dev}} + E_i^{\text{comm}} \le E_{\text{max}, i}, && \forall i \in \mathcal{N} \tag{C2: 设备能量预算} \\
+& \sum_{k=1}^K p_{i,k} \le P_{\text{max}, i}, && \forall i \in \mathcal{N} \tag{C3: 设备最大发射功率} \\
+& 0 \le f_i \le f_{\text{max}, i}, && \forall i \in \mathcal{N} \tag{C4: 设备最大CPU频率} \\
+& \sum_{i \in \mathcal{A}(t)} \tilde{f}_i \le \tilde{F}_{\text{max}}, && \forall t \tag{C5: 服务器总CPU频率} \\
+& \sum_{i=1}^N x_{i,k} \le 1, && \forall k \in \mathcal{K} \tag{C6: OFDMA子载波唯一分配} \\
+& x_{i,k} \in \{0, 1\}, && \forall i \in \mathcal{N}, k \in \mathcal{K} \tag{C7: 二元分配变量} \\
+& 0 \le \rho_i \le 1, \quad 0 \le \tilde{\rho}_i \le 1, && \forall i \in \mathcal{N} \tag{C8: 剪枝率范围}
+\end{align}
+
+\subsection{问题复杂性分析}
+
+问题 (P-Multi) 是一个混合整数非线性规划（Mixed-Integer Non-Linear Program, MINLP）问题。其"混合整数"特性源于二元子载波分配变量 $x_{i,k}$ (C7)。其"非线性"特性源于目标函数和约束条件中高度非凸的表达式。MINLP问题通常是NP-hard的。
+
+% 表2：单设备与多设备问题建模的复杂度对比
+\begin{table}[h!]
+\centering
+\caption{单设备与多设备问题建模的复杂度对比}
+\label{tab:complexity_comparison}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llll}
+\toprule
+\textbf{特性} & \textbf{单设备协同推理 (源自 [1])} & \textbf{多设备协同推理 (本报告)} & \textbf{复杂度增长原因} \\
+\midrule
+\textbf{优化变量} & 标量: $\rho, \tilde{\rho}, f, \tilde{f}, p$ & 向量/矩阵: $\mathbf{\rho}, \tilde{\mathbf{\rho}}, \mathbf{f}, \tilde{\mathbf{f}}, \mathbf{p}, \mathbf{x}$ & 变量数量从常数级增长到与 $N$ 和 $K$ 相关 \\
+\textbf{目标函数} & 最小化单个失真界 $D(\rho, \tilde{\rho})$ & 最小化加权多目标函数 & 引入多维度目标和公平性考量 \\
+\textbf{通信模型} & 解耦的香农容量: $r(p)$ & 耦合的SINR模型: $R_i(\mathbf{x}_i, \mathbf{p}_i)$ & 引入用户间干扰 \\
+\textbf{计算模型} & 确定性处理延迟: $\tilde{T}^I$ & 随机排队系统: $T_i^{\text{serv}} = T_i^{\text{wait}} + T_i^{\text{proc}}$ & 引入服务器端任务排队 \\
+\textbf{核心耦合} & 设备计算 vs. 通信 & 用户间, 域间, 决策间耦合 & 系统从简单权衡演变为复杂耦合系统 \\
+\textbf{问题类型} & 非凸规划 (NCP) & 混合整数非线性规划 (MINLP) & 引入离散变量 $x_{i,k}$ \\
+\textbf{求解方法} & 逐次凸近似 (SCA) & 分解方法, 博弈论, DRL & 需要处理离散变量、动态性和大规模耦合 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\section{分层优化与分解框架}
+
+为了应对 (P-Multi) 的高复杂度，一种有效的方法是采用分层分解的思想，将原问题分解为多个更易于处理的子问题 [21, 22, 24]。
+
+\begin{enumerate}
+\item \textbf{顶层（慢时间尺度）：调度与模型配置}
+\item \textbf{中层（中时间尺度）：通信资源分配}
+\item \textbf{底层（快时间尺度）：服务器计算资源分配}
+\end{enumerate}
+
+\section{先进的算法解决方案}
+
+\subsection{博弈论方法：去中心化的资源分配}
+
+我们可以将 $N$ 个用户设备建模为 $N$ 个理性的"玩家"进行非合作博弈。
+
+\begin{itemize}
+\item \textbf{玩家 (Players)}: 用户设备集合 $\mathcal{N}$。
+\item \textbf{策略 (Strategies)}: 每个玩家 $i$ 的策略是选择其资源使用水平，例如其发射功率向量 $\mathbf{p}_i$。
+\item \textbf{效用函数 (Utility Functions)}: $U_i(\mathbf{p}_i, \mathbf{p}_{-i}) = w_{R} \log(R_i) - w_{P} \sum_k p_{i,k}$。
+\end{itemize}
+
+关键的解概念是纳什均衡（Nash Equilibrium, NE）[25]。
+
+\subsection{深度强化学习框架：动态环境下的智能控制}
+
+对于高度动态且难以精确建模的环境，深度强化学习（DRL）展现出巨大的潜力 [2, 27, 28]。我们将问题构建为一个马尔可夫决策过程 (MDP)。
+
+% 表3：DRL框架组件
+\begin{table}[h!]
+\centering
+\caption{用于多设备协同推理的深度强化学习框架组件}
+\label{tab:drl_framework}
+\begin{tabular}{lp{0.8\textwidth}}
+\toprule
+\textbf{组件} & \textbf{详细描述} \\
+\midrule
+\textbf{状态空间 ($s_t$)} & 状态 $s_t$ 是在时间步 $t$ 对系统环境的完整快照。它是一个高维向量，至少包括：所有用户的信道状态 $\{g_{i,k}(t)\}$, 服务器任务队列状态 $\{Q_i(t)\}$, 设备状态 $\{E_{\text{batt},i}(t)\}$, 当前任务属性 $\{N_{\text{FLOP},i}(t), \theta_i(t)\}$。 \\
+\addlinespace
+\textbf{动作空间 ($a_t$)} & 动作 $a_t$ 是控制代理在一个时间步内可以执行的所有决策的集合。这是一个混合的离散-连续动作空间：子载波分配矩阵 $\mathbf{X}$, 剪枝率向量 $\mathbf{\rho}, \tilde{\mathbf{\rho}}$, 功率分配矩阵 $\mathbf{P}$, 频率分配向量 $\mathbf{f}, \tilde{\mathbf{f}}$。 \\
+\addlinespace
+\textbf{奖励函数 ($r_t$)} & 奖励函数 $r(s_t, a_t)$ 是最关键的设计部分，它引导学习过程朝向系统目标。例如：$r(s_t, a_t) = w_Q \mathcal{F}(\{\frac{1}{D_i}\}) - w_T (\frac{1}{N}\sum_i T_i^{\text{total}}) - w_E E^{\text{total}}$。 \\
+\addlinespace
+\textbf{策略 ($\pi(a_t|s_t)$)} & 策略 $\pi$ 是一个从状态空间到动作空间的映射，由一个深度神经网络（Actor网络）参数化。 \\
+\addlinespace
+\textbf{价值函数 ($V^\pi(s_t)$)} & 价值函数 $V^\pi(s_t)$ 评估了在状态 $s_t$ 下并遵循策略 $\pi$ 的长期期望回报，由另一个深度神经网络（Critic网络）来近似。 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+考虑到问题的高维、连续动作空间，基于策略梯度的Actor-Critic方法是理想的选择，例如多智能体深度确定性策略梯度（MADDPG）[29]。联邦强化学习（Federated Reinforcement Learning）的架构是解决此类大规模网络资源分配问题的有力武器。
+
+% --- 第四部分：分析、建议与未来方向 ---
+\part{分析、建议与未来方向}
+
+\section{性能评估与洞察}
+
+通过仿真实验，可以揭示系统内部存在的几个基本性能权衡：
+
+\begin{itemize}
+\item \textbf{准确性-延迟-能耗的权衡}
+\item \textbf{公平性与系统总吞吐量的权衡}
+\item \textbf{中心化与去中心化的权衡}
+\end{itemize}
+
+\section{战略建议与结论}
+
+\subsection{实际部署建议}
+
+\begin{enumerate}
+\item \textbf{根据环境动态性选择算法}: 对于静态环境，选择分层分解或博弈论方法；对于动态环境，选择深度强化学习框架。
+\item \textbf{分阶段部署}: 初期部署简单方案，后期利用收集的数据训练DRL模型进行升级。
+\item \textbf{异构性管理是关键}: 系统必须能够为每个用户提供"量身定制"的资源分配和模型配置方案。
+\end{enumerate}
+
+\subsection{贡献总结}
+
+本报告的主要贡献包括：
+
+\begin{enumerate}
+\item \textbf{构建了综合性的系统模型}：结合了多用户无线通信中的干扰、多址接入与边缘服务器的排队论模型。
+\item \textbf{形式化了复杂的联合优化问题}：提出了一个统一了模型剪枝、任务调度、通信和计算资源分配的MINLP问题。
+\item \textbf{探索了先进的AI驱动解决方案}：深入探讨了如何利用博弈论和深度强化学习来解决这一复杂、动态的资源分配问题。
+\end{enumerate}
+
+\subsection{未来研究方向}
+
+\begin{itemize}
+\item \textbf{多服务器、多设备场景}: 引入任务路由、负载均衡等新挑战。
+\item \textbf{安全与隐私增强}: 融入差分隐私、同态加密等技术。
+\item \textbf{与语义通信的融合}: 仅传输与任务最相关的信息，改变通信与计算的权衡。
+\item \textbf{硬件感知的协同优化}: 将任务的不同计算层调度到最适合的硬件单元上。
+\item \textbf{绿色边缘智能}: 将可再生能源利用等绿色计算技术整合到资源分配框架中。
+\end{itemize}
+
+\end{document}
